@@ -1,0 +1,43 @@
+ggplot = grammar of graphics
+
+great theme system to polish plot appearance 
+
+
+LAYERS
+1. data - in tidy format + define aesthetics (variables onto plot, axes, shapes, colors)
+2. geometric objects (geoms, type of plot)
+3. statistical transformations - algorithm used to calc new values for a graph 
+4. position adjustment - control fine details of position when geoms might otherwise overlap 
+5. coordinate system - change what x and y mean 
+6. facet - create subplots that each display one subset of data
+
+ENHANCE LAYERS
+1. labels – add / update titles, axis / legend labels
+2. annotations – add textual labels (e.g. to highlight specific data points or trend lines, etc.)
+3. scales – update how the aesthetic mappings manifest visually (e.g. colors scales, axis ticks, legends)
+4. themes – customize the non-data elements of your plot
+5. layout – combine multiple plots into the same graphic
+
+TIDY DATA 
+- each variable forms a col 
+- each obs forms a row 
+- each cell is a single measurement 
+
+- The {tidyverse} is an “opinionated” set of packages – meaning they share similar philosophies, grammar, and data structures – that are incredibly useful for data wrangling, cleaning, and manipulation (and of course, visualization).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
