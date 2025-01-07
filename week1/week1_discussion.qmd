@@ -1,0 +1,43 @@
+---
+Title: "week1_discussion"
+Format: html
+Author: "Kaiju Morquecho"
+Data: January 7th, 2024
+editor_options: 
+  chunk_output_type: console
+---
+
+# load packages
+```{r}
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(janitor)
+```
+
+# load data
+```{r}
+fracking <- read_csv(here::here("week1","data","registryupload_1.csv"))
+```
+
+# data exploration 
+```{r}
+dim(fracking)
+str(fracking) # type of col (chr, num)
+view(fracking)
+```
+
+# clean fracking data
+```{r}
+fracking_clean <- 
+  fracking %>% 
+  clean_names() %>%
+  mutate(job_start_date = str_remove(job_start_date," AM")) %>%
+  mutate(datetime_start = mdy_hms(job_start_date)) %>%
+  mutate(year = year(datetime_start)) %>%
+  select(datetime_start, year, state_name, well_name, total_base_water_volume)
+  
+
+fracking_clean
+```
+
