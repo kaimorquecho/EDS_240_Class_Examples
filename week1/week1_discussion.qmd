@@ -13,6 +13,7 @@ library(tidyverse)
 library(here)
 library(ggplot2)
 library(janitor)
+library(usdata)
 ```
 
 # load data
@@ -35,7 +36,36 @@ fracking_clean <-
   mutate(job_start_date = str_remove(job_start_date," AM")) %>%
   mutate(datetime_start = mdy_hms(job_start_date)) %>%
   mutate(year = year(datetime_start)) %>%
-  select(datetime_start, year, state_name, well_name, total_base_water_volume)
+  select(datetime_start, year, state_name, well_name, total_base_water_volume) %>%
+  mutate(state_name = str_to_title(state_name)) %>%
+  filter(!str_detect(state_name, pattern = "\\?")) %>% # ? is operator so must add \\ first to get out of ? functionality
+  mutate(state_name = ifelse(
+    test = str_length(state_name) == 2, 
+    yes = abbr2state(state_name),
+    no = state_name)) %>%
+  mutate(state_name = case_when(
+    state_name == "Colordao" ~ "Colorado",
+    state_name == "Loiusiana" ~ "Louisiana",
+    state_name == "Louisianna" ~ "Louisiana",
+    state_name == "Lousiana" ~ "Louisiana",
+    state_name == "New Mexcio" ~ "New Mexico",
+    state_name == "Norh Dakota" ~ "North Dakota",
+    state_name == "Norht Dakota" ~ "North Dakota",
+    state_name == "North  Dakota" ~ "North Dakota",
+    state_name == "North Dakata" ~ "North Dakota",
+    state_name == "North Dakotta" ~ "North Dakota",
+    state_name == "Noth Dakota" ~ "North Dakota",
+    state_name == "Pennslvania" ~ "Pennsylvania",
+    state_name == "Pennsylavania" ~ "Pennsylvania",
+    state_name == "Pennsylvanya" ~ "Pennsylvania",
+    state_name == "Penssylvania" ~ "Pennsylvania",
+    state_name == "Texasa" ~ "Texas",
+    state_name == "Texs" ~ "Texas", 
+    state_name == "West Viginia" ~ "West Virginia",
+    state_name == "Wyominng" ~ "Wyoming", 
+    TRUE ~ state_name # copy over rest of state names from as-is
+  )) %>%
+  filter(!state_name %in% c("Beaver","Beckham","Harper","Hemphill","Midland","Red River","Roosevelt","Rusk","State","Ward"))
   
 
 fracking_clean
