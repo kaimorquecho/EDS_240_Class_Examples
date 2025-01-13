@@ -356,7 +356,10 @@ ggplot(mko_clean, aes(x = Temp_bot, y = month_name))
 #| message: false
 
 # jittered points (and raincloud option) ----
-
+# add jittered data points ----
+ggplot(penguins, aes(x = species, y = body_mass_g)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(alpha = 0.5, width = 0.2) 
 ```
 
 ## Boxplots

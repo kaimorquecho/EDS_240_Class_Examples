@@ -6,8 +6,8 @@ date: 2025-01-13
 toc: true
 ---
 
-::: {.callout-note}
-This template follows [lecture 2.3 slides](https://eds-240-data-viz.github.io/course-materials/lecture-slides/lecture2.3-evolution-slides.html#/title-slide){target="_blank}.
+::: callout-note
+This template follows [lecture 2.3 slides](https://eds-240-data-viz.github.io/course-materials/lecture-slides/lecture2.3-evolution-slides.html#/title-slide){target="\"_blank"}.
 :::
 
 ## Setup
@@ -62,13 +62,7 @@ lyme_clean <- lyme |>
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #........get pop estimates by state using tidycensus API.........
-us_state_pop <- get_estimates(geography = "state", 
-                              product = "population",
-                              state = NULL, 
-                              year = 2019) |> # request 2019 vintage for the 2010s (see documentation)
-  filter(variable == "POP") |> 
-  select(state = NAME, population = value) |> 
-  filter(state != "Puerto Rico")
+us_state_pop <- read_csv(here::here("week2","data","us_state_pop.csv"))
 
 #........................write data to csv.......................
 # OPTIONAL, but recommended in case you want to work offline, the API is down, etc. (you can then read in your saved data file rather than run the above code)
@@ -89,15 +83,20 @@ lyme_pop <- left_join(lyme_clean, us_state_pop) |>
 
 ## Line graphs
 
-- show evolution of one or more numeric variables; similar to scatter plots but points are ordered (typically by x-axis value) and joined with straight line segments
+-   show evolution of one or more numeric variables; similar to scatter plots but points are ordered (typically by x-axis value) and joined with straight line segments
 
 ```{r}
 #| eval: true
 #| echo: true
 # line chart ----
+
+ggplot(lyme_pop, aes(x = year, y = cases_per100k, group = state)) + 
+  geom_line() +
+  geom_point()
+
 ```
 
-### Alt 1: Avoid spaghetti plots 
+### Alt 1: Avoid spaghetti plots
 
 ```{r}
 #| eval: true
@@ -107,11 +106,13 @@ lyme_pop <- left_join(lyme_clean, us_state_pop) |>
 
 # highlight one group ----
 ggplot(lyme_pop, aes(x = year, y = cases_per100k, group = state)) +
-  geom_line() 
+  geom_line() +
+  gghighlight::gghighlight(state == "New Jersey") 
 
 # highlight based on criteria ----
-ggplot(lyme_pop, aes(x = year, y = cases_per100k, group = state)) +
-  geom_line() 
+ggplot(lyme_pop, aes(x = year, y = cases_per100k, group = state, color = state)) +
+  geom_line() +
+  gghighlight::gghighlight(max(cases_per100k) > 100) 
 ```
 
 ### Note 1: It's okay to cut the y-axis
@@ -139,8 +140,8 @@ lyme_pop |>
 
 ### Note 2: Consider aspect ratio
 
-- here, 10 units on our x-axis (years 2010 - 2020), and ~175 units (case_per100k 0 to ~175) on our y-axis
-- ggplot automatically adjusts aspect ratio so that plot is easier to read 
+-   here, 10 units on our x-axis (years 2010 - 2020), and \~175 units (case_per100k 0 to \~175) on our y-axis
+-   ggplot automatically adjusts aspect ratio so that plot is easier to read
 
 ```{r}
 #| eval: true
@@ -153,8 +154,8 @@ lyme_pop |>
   scale_y_continuous(breaks = seq(0, 190, by = 1)) 
 ```
 
-- we can fix the aspect ratio of our plot
-- `ratio` is expressed as `y / x` and is set to `1` by default (see grid lines)
+-   we can fix the aspect ratio of our plot
+-   `ratio` is expressed as `y / x` and is set to `1` by default (see grid lines)
 
 ```{r}
 #| eval: true
@@ -164,11 +165,12 @@ lyme_pop |>
   filter(state == "Vermont") |> 
   ggplot(aes(x = year, y = cases_per100k, group = state)) +
   geom_line() +
-  scale_y_continuous(breaks = seq(0, 190, by = 1)) 
+  # scale_y_continuous(breaks = seq(0, 190, by = 1)) +
+  coord_fixed(ratio = 1/50)
 ```
 
-- ratios > 1: units on the y-axis longer than units on the x-axis (resulting in steeper slopes) 
-- ratios < 1: units on the x-axis longer than units on the y-axis (resulting in shallower slopes)
+-   ratios \> 1: units on the y-axis longer than units on the x-axis (resulting in steeper slopes)
+-   ratios \< 1: units on the x-axis longer than units on the y-axis (resulting in shallower slopes)
 
 ```{r}
 #| eval: true
@@ -182,31 +184,44 @@ lyme_pop |>
 
 ## Area charts
 
-- similar to line chart; indicates change in a numeric variable through time, but the space between x-axis and line is shaded in
+-   similar to line chart; indicates change in a numeric variable through time, but the space between x-axis and line is shaded in
 
 ```{r}
 #| eval: true
 #| echo: true
 # area chart of lyme disease incidence in NJ ----
 lyme_pop |> 
-  filter(state == "New Jersey")
+  filter(state == "New Jersey") %>%
+  ggplot(aes(x = year, 
+             y = cases_per100k, 
+             group = state,
+             fill = state)) +
+  geom_area() +
+  scale_x_discrete(expand = c(0,NA)) +
+  scale_y_continuous(expand = c(0,NA)) # expands values so they start at 0
+  
 ```
 
-## Stacked area charts 
+## Stacked area charts
 
-- show evolution of the whole + relative proportions of each group
+-   show evolution of the whole + relative proportions of each group
 
 ```{r}
 #| eval: true
 #| echo: true
 # stacked area chart ----
-lyme_pop |> 
-  filter(state %in% c("Maine", "Rhode Island", "New Hampshire", "Vermont")) 
+lyme_pop %>% 
+  filter(state %in% c("Maine", "Rhode Island", "New Hampshire", "Vermont")) %>%
+  ggplot(aes(x = year, 
+             y = cases_per100k,
+             group = state, 
+             fill = state)) +
+  geom_area() 
 ```
 
 ### Alt 1: proportional stacked area chart
 
-- plot percentage contributions rather than absolute numbers on y-axis
+-   plot percentage contributions rather than absolute numbers on y-axis
 
 ```{r}
 #| eval: true
@@ -215,7 +230,9 @@ lyme_pop |>
 lyme_pop |> 
   filter(state %in% c("Maine", "Rhode Island", "New Hampshire", "Vermont")) |> 
   ggplot(aes(x = year, y = cases_per100k, group = state, fill = state)) +
-  geom_area() 
+  geom_area(position = "fill") + # this makes it a filled out block 
+  scale_y_continuous(labels = scales::label_percent(scale = 100)) +
+  scale_x_discrete(expand = c(0,NA)) 
 ```
 
 ### Note 1: stacked area charts aren't great for looking at evolution of individual groups
@@ -237,4 +254,3 @@ lyme_pop |>
   geom_line() +
   facet_wrap(~state)
 ```
-

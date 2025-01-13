@@ -30,9 +30,16 @@ DENSITY PLOTS
 - representation of the distribution of a numeric variable(s)
   - uses a kernel density estimate (KDE) 
 
-
-
-
-
-
-
+ASPECT RATIO
+- the aspect ratio is the height:width ratio of a graph. - the larger the aspect ratio, the steeper changes appear, which may cause readers to interpret changes as more important. 
+- the smaller the aspect ratio, the flatter the line which may cause readers to interpret changes as small / insignificant.
+  Y-AXIS IN LINE GRAPHS 
+  - line graphs encode data by position and not length (e.g. as in the height of a bar graph), therefore, you can choose to include the 0 origin only if it makes sense.
+  - do not start the y-axis at 0 if the range of data is small but the distance from the bottom of the range to zero is large
+  - do not start the y-axis at 0 if the relationship to zero is insignificant
+  - ggplot decides the default for you 
+  
+  
+  
+  
+  
