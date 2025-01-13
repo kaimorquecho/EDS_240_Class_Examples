@@ -1,0 +1,38 @@
+Lecture Week 2 
+We understand complex numbers better when they're represented visually 
+
+Hierarchy of elementary perceptual tasks
+- a viewer performs one or more of these mental-visual tasks (judging position, perceiving angles/areas) to extract the values of real variables represented on most graphs 
+- successful charts are constructed based on elemetary tasks "as high in the hierarchy as possible"
+- according to this study (about statistical graphs only), color schemes are actually not ideal ways to convey information
+
+Unique visualizations
+- creativity, uniqueness can be valuable and powerful even if not aligned with standard practices 
+
+Tips for choosing right graphic form
+- think about tasks you want viewers to perform (compare, see flow, reveal connections, general temporal or spatial patterns etc) or messages you want to convey
+- consider the number of variables and the numbers of data points + data types to determine appropriate graphic form
+- try different things
+- arrange graphics components to make it easier to extract meaning 
+- test outcome of graphics on others 
+
+
+Visualizing data distribution = visualize the spread of numeric variable
+
+HISTOGRAMS
+- need a numeric variable with lots of values 
+- meaningful differences between values 
+- bin width (30 bins by default)
+- not ideal when we have a lot of groups (i.e all months in a year vs the seasons of the year)
+
+DENSITY PLOTS
+- referred to as a smoothed verrsion of a histogram
+- representation of the distribution of a numeric variable(s)
+  - uses a kernel density estimate (KDE) 
+
+
+
+
+
+
+

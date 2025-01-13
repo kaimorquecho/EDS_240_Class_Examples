@@ -1,19 +1,21 @@
 ---
 title: "Lecture 2.2 TEMPLATE"
 subtitle: "Visualizing distributions"
-author: "Your Name"
+author: "Kaiju"
 date: 2025-01-13
 toc: true
+editor_options: 
+  chunk_output_type: console
 ---
 
-::: {.callout-note}
-This template follows [lecture 2.2 slides](https://eds-240-data-viz.github.io/course-materials/lecture-slides/lecture2.2-distributions-slides.html#/title-slide){target="_blank}.
+::: callout-note
+This template follows [lecture 2.2 slides](https://eds-240-data-viz.github.io/course-materials/lecture-slides/lecture2.2-distributions-slides.html#/title-slide){target="\"_blank"}.
 :::
 
 ## Setup
 
-- Find data & metadata on the [EDI Data Portal](https://portal.edirepository.org/nis/mapbrowse?scope=knb-lter-sbc&identifier=2007). 
-- Get data download link by right-clicking on the **Download** button > **Copy Link Address** > then paste into `read_csv()`
+-   Find data & metadata on the [EDI Data Portal](https://portal.edirepository.org/nis/mapbrowse?scope=knb-lter-sbc&identifier=2007).
+-   Get data download link by right-clicking on the **Download** button \> **Copy Link Address** \> then paste into `read_csv()`
 
 ```{r}
 #| eval: true
@@ -42,29 +44,29 @@ mko <- read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=knb-l
 ##                                wrangle data                              ----
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-mko_clean <- mko |>
+mko_clean <- mko %>%
 
   # keep only necessary columns ----
   select(year, month, day, decimal_time, Temp_bot, Temp_top, Temp_mid) |>
 
   # create datetime column (not totally necessary for our plots, but it can be helpful to know how to do this!) ----
-  unite(date, year, month, day, sep = "-", remove = FALSE) |>
-  mutate(time = chron::times(decimal_time)) |>
-  unite(date_time, date, time, sep = " ") |>
+  unite(date, year, month, day, sep = "-", remove = FALSE) %>%
+  mutate(time = chron::times(decimal_time)) %>%
+  unite(date_time, date, time, sep = " ") %>%
 
   # coerce data types ----
   mutate(date_time = as_datetime(date_time, "%Y-%m-%d %H:%M:%S", tz = "GMT"), 
          year = as.factor(year),
          month = as.factor(month),
-         day = as.numeric(day)) |>
+         day = as.numeric(day)) %>%
 
   # add month name by indexing the built-in `month.name` vector ----
-  mutate(month_name = month.name[month]) |> 
+  mutate(month_name = month.name[month]) %>% 
 
   # replace 9999s with NAs ----
   naniar::replace_with_na(replace = list(Temp_bot = 9999, 
                                          Temp_top = 9999, 
-                                         Temp_mid = 9999)) |>
+                                         Temp_mid = 9999)) %>%
 
   # select/reorder desired columns ----
   select(date_time, year, month, day, month_name, Temp_bot, Temp_mid, Temp_top)
@@ -74,29 +76,43 @@ mko_clean <- mko |>
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #..........counts & percentages of missing data by year..........
-see_NAs <- mko_clean |> 
-  group_by(year) |> 
-  naniar::miss_var_summary() |>
+see_NAs <- mko_clean %>%
+  group_by(year) %>%
+  naniar::miss_var_summary() %>% # gathers summary of missing data
   filter(variable == "Temp_bot")
 
 #...................visualize missing Temp_bot...................
-bottom <- mko_clean |> select(Temp_bot)
+bottom <- mko_clean %>% select(Temp_bot)
 missing_temps <- naniar::vis_miss(bottom)
 ```
 
 ## Histograms
 
-- represent distribution of a numeric variable(s), which is cut into several bins -- height of bar represents # of observations in that bin
+-   represent distribution of a numeric variable(s), which is cut into several bins -- height of bar represents \# of observations in that bin
 
 ### Too many groups
 
-*Note the message, to remind us to consider adjusting our `binwidth`* 
+*Note the message, to remind us to consider adjusting our `binwidth`*
 
 ```{r}
 #| eval: true
 #| echo: true
 
 # histogram with all 12 months ----
+mko_clean %>%
+  mutate(month_name = factor(month_name, levels = month.name)) %>% # we want to make month_name into factor, month.name is vector included in R, we used it to give all the month names without typing them out
+  ggplot(aes(x = Temp_bot, fill = month_name)) + # no y axis because it will be the count for months 
+  geom_histogram(position = "identity",
+                 alpha = 0.5) # to unstack the bars
+  
+
+
+
+
+
+
+
+
 ```
 
 ### Alt 1: small multiples
@@ -110,7 +126,14 @@ missing_temps <- naniar::vis_miss(bottom)
 # histogram faceted by month ----
 mko_clean |> 
   mutate(month_name = factor(month_name, levels = month.name)) |> 
-  ggplot(aes(x = Temp_bot, fill = month_name))
+  ggplot(aes(x = Temp_bot, fill = month_name)) +
+  geom_histogram() +
+  facet_wrap(~month_name)
+
+
+
+
+
 ```
 
 ### Alt 2: fewer groups + update colors + modify bin widths
@@ -121,15 +144,20 @@ mko_clean |>
 #| warning: false
 
 # histogram with fewer months; use these colors: c("#2C5374", "#ADD8E6", "#8B3A3A") ----
-mko_clean |> 
-  mutate(month_name = factor(month_name, levels = month.name)) |> 
+mko_clean %>%
+  mutate(month_name = factor(month_name,levels = month.name)) %>%
+  filter(month_name %in% c("April","June","October")) %>%
   ggplot(aes(x = Temp_bot, fill = month_name)) +
-  geom_histogram(position = "identity", alpha = 0.5)
+  geom_histogram(position = "identity",
+                 alpha = 0.5,
+                 color = "black",
+                 binwidth = 1) + # changes size of bin to include only 1 degree, 
+  scale_fill_manual(values = c("#2C5374", "#ADD8E6", "#8B3A3A"))
 ```
 
 ## Density plots
 
-- represent data distribution of a numeric variable(s); uses KDE to show probability density function of the variable, the y-axis represents the estimated density, i.e. the relative likelihood of a value occurring, and the area under each curve is equal to 1
+-   represent data distribution of a numeric variable(s); uses KDE to show probability density function of the variable, the y-axis represents the estimated density, i.e. the relative likelihood of a value occurring, and the area under each curve is equal to 1
 
 ### Too many groups
 
@@ -141,7 +169,8 @@ mko_clean |>
 # density plot with all 12 months ----
 mko_clean |> 
   mutate(month_name = factor(x = month_name, levels = month.name)) |> 
-  ggplot(aes(x = Temp_bot, fill = month_name)) 
+  ggplot(aes(x = Temp_bot, fill = month_name)) +
+  geom_density(alpha = 0.5)
 ```
 
 ### Alt 1: small multiples
@@ -155,7 +184,8 @@ mko_clean |>
 mko_clean |> 
   mutate(month_name = factor(month_name, levels = month.name)) |> 
   ggplot(aes(x = Temp_bot)) +
-  geom_density() 
+  geom_density(fill = "gray30") +
+  facet_wrap(~month_name) 
 ```
 
 ### Alt 2: fewer groups + update colors + modify band widths
@@ -169,7 +199,8 @@ mko_clean |>
 mko_clean |> 
   filter(month_name %in% c("April", "June", "October")) |> 
   ggplot(aes(x = Temp_bot, fill = month_name)) +
-  geom_density(alpha = 0.5) 
+  geom_density(alpha = 0.5, adjust = 0.5 ) + # adjust makes density plot less smooth
+  scale_fill_manual(values = c("#2C5374", "#ADD8E6", "#8B3A3A"))
 ```
 
 ## A few more histograms & density plots
@@ -178,7 +209,7 @@ mko_clean |>
 
 ```{r}
 #| eval: true
-#| echo: true
+#| echo: true                   
 #| warning: false
 #| message: false
 #| layout-ncol: 2
@@ -241,7 +272,7 @@ ggplot(penguins, aes(x = body_mass_g, y = after_stat(count))) +
 
 ## Ridgeline plots
 
-- show distribution of a numeric variable for multiple groups
+-   show distribution of a numeric variable for multiple groups
 
 ```{r}
 #| eval: true
@@ -253,6 +284,17 @@ ggplot(penguins, aes(x = body_mass_g, y = after_stat(count))) +
 # basic ridgeline plot ----
 
 # fill with color gradient; use these colors: c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A") ----
+
+# basic ridgeline plot ----
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name)) +
+  ggridges::geom_density_ridges(rel_min_height = 0.01,
+                                scale = 3) # rel_min_height sets threshhold for our x axis limits
+# scale adjusts the overlap of each ridge
+# fill with color gradient ----
+ggplot(mko_clean, aes(x = Temp_bot, y = month_name, fill = after_stat(x))) +
+  ggridges::geom_density_ridges_gradient() +
+  scale_fill_gradientn(colors = c("#2C5374","#849BB4", "#D9E7EC", "#EF8080", "#8B3A3A")) +
+  scale_y_discrete(limits = rev(month.name)) # gets month names in chronological order, rev = reverses order 
 
 ```
 
@@ -319,7 +361,7 @@ ggplot(mko_clean, aes(x = Temp_bot, y = month_name))
 
 ## Boxplots
 
-- *summarize* the distribution of a numeric variable for one or several groups
+-   *summarize* the distribution of a numeric variable for one or several groups
 
 ```{r}
 #| eval: true
@@ -327,6 +369,15 @@ ggplot(mko_clean, aes(x = Temp_bot, y = month_name))
 #| warning: false
 
 # boxplot with all 12 months ----
+ggplot(mko_clean, aes(x = month_name,
+                      y = Temp_bot)) +
+  geom_boxplot() +
+  scale_x_discrete(limits = month.name) # organize x-axis by month order reversed
+
+
+
+
+
 ```
 
 ### Alt 1: modify outliers
@@ -351,13 +402,17 @@ ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
 #| warning: false
 
 # highlight a particular group ----
-ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
+ggplot(mko_clean, aes(x = month_name, 
+                      y = Temp_bot,
+                      fill = month_name)) +
   geom_boxplot() +
-  scale_x_discrete(limits = rev(month.name)) + 
-  coord_flip()
+  scale_x_discrete(limits = rev(month.name)) + # discrete variable and x axis 
+  gghighlight(month_name == "October") +
+  coord_flip() + # flips axis +
+  theme(legend.position = "none")
 ```
 
-### Alt 3: jitter raw data (using `{palmerpenguins}` data) 
+### Alt 3: jitter raw data (using `{palmerpenguins}` data)
 
 ```{r}
 #| eval: true
@@ -378,7 +433,9 @@ ggplot(penguins, aes(x = species, y = body_mass_g)) +
 
 # dodge groups by year ----
 ggplot(penguins, aes(x = species, y = body_mass_g)) +
-  geom_boxplot(outlier.shape = NA) 
+  geom_boxplot(outlier.shape = NA) +
+  geom_point(alpha = 0.5)
+ # if adding data points jittered on top, ensure to remove outliers to prevent duplicate data points
 ```
 
 ### Alt 5: overlay beeswarm
@@ -390,12 +447,13 @@ ggplot(penguins, aes(x = species, y = body_mass_g)) +
 
 # boxplot + beeswarm ----
 ggplot(penguins, aes(x = species, y = body_mass_g)) +
-  geom_boxplot(outlier.shape = NA) 
+  geom_boxplot(outlier.shape = NA) + 
+  geom_beeswarm(size = 1)
 ```
 
 ## Violin plots
 
-- visualize distribution of a numeric variable for one or several groups; great for multiple groups with lots of data
+-   visualize distribution of a numeric variable for one or several groups; great for multiple groups with lots of data
 
 ```{r}
 #| eval: true
@@ -403,7 +461,10 @@ ggplot(penguins, aes(x = species, y = body_mass_g)) +
 #| warning: false
 
 # violin plot ----
-ggplot(mko_clean, aes(x = month_name, y = Temp_bot))
+ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
+  geom_violin() +
+  scale_x_discrete(limits = rev(month.name)) +
+  coord_flip()
 ```
 
 ### Alt 1: overlay boxplot
@@ -416,6 +477,8 @@ ggplot(mko_clean, aes(x = month_name, y = Temp_bot))
 # violin + boxplot ----
 ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
   geom_violin() +
+  geom_boxplot(width = 0.1, color = "gray", alpha = 0.5, 
+               outlier.color = "red") +
   scale_x_discrete(limits = rev(month.name)) +
   coord_flip()
 ```
@@ -428,5 +491,7 @@ ggplot(mko_clean, aes(x = month_name, y = Temp_bot)) +
 #| warning: false
 
 # half violin + half dot plot ----
+ggplot(penguins, aes(x = species, y = bill_length_mm, fill = species)) +
+  see::geom_violindot(size_dots = 5, alpha = 0.5) +
+  theme(legend.position = "none")
 ```
-
