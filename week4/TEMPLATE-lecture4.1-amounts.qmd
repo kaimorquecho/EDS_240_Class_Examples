@@ -109,9 +109,11 @@ jobs_clean |>
   geom_linerange(aes(ymin = 0,
                      ymax = total_earnings)) + # creates straight lines, must give it xmin,xmax,or ymin,ymax 
   coord_flip() +
-  scale_y_continuous(labels = scales::label_currency(scale = 
-                                                       0.001,
-                                                     suffix = "k")) +
+  scale_y_continuous(labels = scales::label_currency(scale = 0.001, suffix = "k"),
+                     limits = c(0,250000)) +
+  geom_text(aes(label = dollar(total_earnings),
+                hjust = -0.2)) 
+  
   
 ```
 
@@ -159,7 +161,14 @@ ggplot(jobs_clean, aes(x = major_category)) +
 jobs_clean |> 
   filter(year == 2016) |> 
   slice_max(order_by = total_earnings, n = 10) |> 
-  mutate(occupation = fct_reorder(.f = occupation, .x = total_earnings)) 
+  mutate(occupation = fct_reorder(.f = occupation, .x = total_earnings)) %>%
+  pivot_longer(cols = c(total_earnings_female, total_earnings_male),
+               names_to = "group",
+               values_to = "earnings_by_group") %>%
+  mutate(sex = str_remove(string = group, pattern = "total_earnings_")) %>%
+  ggplot(aes(x = occupation, y = earnings_by_group, fill = sex)) +
+  geom_col(position = "dodge") +
+  coord_flip()
 ```
 
 ### Lollipop chart (2 groups)
@@ -173,7 +182,12 @@ jobs_clean |>
   slice_max(order_by = total_earnings, n = 10) |>
   mutate(occupation = fct_reorder(.f = occupation, .x = total_earnings)) |> 
   pivot_longer(cols = c(total_earnings_female, total_earnings_male), names_to = "group", values_to = "earnings_by_group") |> 
-  mutate(sex = str_remove(string = group, pattern = "total_earnings_"))
+  mutate(sex = str_remove(string = group, pattern = "total_earnings_")) %>%
+  ggplot(aes(x = occupation, y = earnings_by_group, color = sex)) +
+  geom_point(position = position_dodge(width = 0.75)) +
+  geom_linerange(aes(ymin = 0, ymax = earnings_by_group),
+                 position = position_dodge(width = 0.75)) + # geom_linerange can start at non-zero, must set ymin=0 to prevent
+  coord_flip()
 ```
 
 ## Heatmap
